@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>dashboard</h1>
+    <h2>hi {{user.username}}</h2>
+   
+    <p>total income {{ total_income }}</p>
+    <p>total expenses {{ total_expenses }}</p>
+    <p> balance {{ balance }}</p>
+    <hr>
+    <a href="{% url 'add_transaction' %}">Add transaction</a>
+  <a href="{% url 'transaction_list' %}">See all transactions</a>
+    <h3>recent transactions</h3>
+    {% if transactions %}
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>sno.</th>
+                <th>date</th>
+                <th>type</th>
+                <th>category</th>
+                <th>amount</th>
+                <th>description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{forloop.counter}}</td>
+                <td>{{transaction.date}}</td>
+                <td>{{transaction.type}}</td>
+                <td>{{transaction.category}}</td>
+                <td>{{transaction.amount}}</td>
+                <td>{{transaction.description}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>no transactions yet</p>
+    {% endif %}
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">logout</button>
+    </form>
+{% endblock %}
