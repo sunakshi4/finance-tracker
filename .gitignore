@@ -1,15 +1,1 @@
-nano .gitignore
-# Python
 __pycache__/
-*.py[cod]
-*.sqlite3
-*.log
-*.env
-# Virtual environment
-venv/
-# Django static/media files
-/static/
-media/
-# OS-specific files
-.DS_Store
-Thumbs.db
