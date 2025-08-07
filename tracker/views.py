@@ -7,6 +7,7 @@ from .models import Transaction, Budget
 from django.db.models import Sum
 from datetime import date
 from django.utils.timezone import now
+from django.core.paginator import Paginator
 
 def register(request):
     if request.method=='POST':
@@ -50,8 +51,13 @@ def dashboard(request):
 def transaction_list(request):
     user = request.user
     transactions = Transaction.objects.filter(user=user).order_by('-date')
+
+    paginator = Paginator(transactions,5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render (request, 'transaction_list.html', {
-        'transactions': transactions})
+        'transactions': transactions,
+        'page_obj': page_obj})
 
 
 @login_required
