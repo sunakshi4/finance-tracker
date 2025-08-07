@@ -1,16 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h1>dashboard</h1>
-    <h2>hi {{user.username}}</h2>
+    <h3>Dashboard</h3>
+    <h4>hi {{user.username}}</h4>
    
     <p>total income {{ total_income }}</p>
     <p>total expenses {{ total_expenses }}</p>
     <p> balance {{ balance }}</p>
     <hr>
-    <a href="{% url 'add_transaction' %}">Add transaction</a>
-  <a href="{% url 'transaction_list' %}">See all transactions</a>
+    
+
+
+<h4> Monthly  Budget</h4>
+{% if budget_amount %}
+    <p>Budget: ₹{{ budget_amount }}</p>
+   <a href="{% url 'edit_budget' budget_id=current_month_budget.id %}" class="btn btn-warning text-white">Edit budget</a>
+    <p>Spent: {{ current_month_expenses }}</p>
+    {% if budget_difference < 0 %}
+        <p style="color: red;"><strong>Over Budget by {{ budget_difference }}</strong></p>
+    {% else %}
+        <p style="color: green;"><strong>Remaining Budget: ₹{{ budget_difference }}</strong></p>
+    {% endif %}
+{% else %}
+    <p>No budget set for this month.</p>
+    <a href="{% url 'add_budget' %}" class="btn btn-warning text-white">Add Budget</a>
+{% endif %}
+
+
     <h3>recent transactions</h3>
-    {% if transactions %}
+    {% if recent_transactions %}
     <table border="1" cellpadding="8" cellspacing="0">
         <thead>
             <tr>
@@ -23,7 +40,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for transaction in transactions %}
+            {% for transaction in recent_transactions %}
             <tr>
                 <td>{{forloop.counter}}</td>
                 <td>{{transaction.date}}</td>
@@ -35,11 +52,16 @@
             {% endfor %}
         </tbody>
     </table>
+    <br>
+    <br>
     {% else %}
     <p>no transactions yet</p>
     {% endif %}
+
+    <a href="{% url 'add_transaction' %}" class="btn btn-success text-white">Add transaction</a>
+    <a href="{% url 'transaction_list' %}" class="btn btn-success text-white">See all transactions</a>
     <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
-        <button type="submit">logout</button>
+        <br><button type="submit" class="btn btn-primary text-white">logout</button>
     </form>
 {% endblock %}

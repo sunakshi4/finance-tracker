@@ -22,4 +22,6 @@ class Budget(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     month = models.DateField(help_text="set to the first day of the month")
+    def __str__(self):
+        return f"{self.user.username} - {self.month.strftime('%B %Y')} - {self.amount}"
 
