@@ -8,6 +8,9 @@ from django.db.models import Sum
 from datetime import date
 from django.utils.timezone import now
 from django.core.paginator import Paginator
+import csv
+from django.http import HttpResponse
+
 
 def register(request):
     if request.method=='POST':
@@ -123,3 +126,29 @@ def edit_budget(request, budget_id):
     else:
         form = BudgetForm(instance=budget)
     return render(request, 'edit_budget.html', {'form': form})
+
+@login_required
+def export_data_csv(request):
+        transactions = Transaction.objects.filter(user=request.user)
+      # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
+
+        # Create a CSV writer object.
+        writer = csv.writer(response)
+
+        # Write the header row.
+        writer.writerow(['Date', 'Type ', 'Category', 'Amount', 'Description'])
+
+
+        # Write data rows.
+        for t in transactions:
+            writer.writerow([
+                 t.date,
+                 t.type,
+                 t.category,
+                 t.amount,
+                 t.description
+            ])
+
+        return response
