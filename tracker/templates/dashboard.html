@@ -60,6 +60,7 @@
 
     <a href="{% url 'add_transaction' %}" class="btn btn-success text-white">Add transaction</a>
     <a href="{% url 'transaction_list' %}" class="btn btn-success text-white">See all transactions</a>
+    <a href="{% url 'export_csv' %}" class="btn btn-danger text-white">export</a>
     <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <br><button type="submit" class="btn btn-primary text-white">logout</button>
