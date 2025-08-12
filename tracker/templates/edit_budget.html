@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Edit Budget</h2>
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">save changes</button>
+</form>
+<br>
+<a href="{% url 'dashboard' %}">back</a>
+{% endblock %}

@@ -1,10 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from .forms import TransactionForm
+from .forms import TransactionForm, BudgetForm
 from django.contrib import messages
-from .models import Transaction
+from .models import Transaction, Budget
 from django.db.models import Sum
+from datetime import date
+from django.utils.timezone import now
+from django.core.paginator import Paginator
+import csv
+from django.http import HttpResponse
+
 
 def register(request):
     if request.method=='POST':
@@ -19,22 +25,42 @@ def register(request):
 @login_required
 def dashboard(request):
     user = request.user
-    transactions = Transaction.objects.filter(user=user)
+    transactions = Transaction.objects.filter(user=user).order_by('-date')
+    recent_transactions=transactions[:5]
     total_income = transactions.filter(type='income').aggregate(Sum('amount'))['amount__sum'] or 0
     total_expenses = transactions.filter(type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
     balance = total_income-total_expenses
+
+    today = now().date()
+    # current_month_start = today.replace(day=1)
+    current_month_expenses = transactions.filter(type='expense', date__year=today.year, date__month=today.month).aggregate(Sum('amount'))['amount__sum'] or 0
+    current_month_budget = Budget.objects.filter(user=user, month__month=today.month).first()
+    budget_amount = current_month_budget.amount if current_month_budget else 0
+    budget_difference = budget_amount-current_month_expenses
+
     return render (request, 'dashboard.html', {
         'total_income': total_income,
         'total_expenses' : total_expenses,
         'balance' : balance,
-        'transactions': transactions})
+        'transactions': transactions,
+        'recent_transactions': recent_transactions,
+        'budget_amount': budget_amount,
+        'current_month_expenses': current_month_expenses,
+        'budget_difference': budget_difference,
+        'current_month_budget':current_month_budget
+        })
 
 @login_required
 def transaction_list(request):
     user = request.user
     transactions = Transaction.objects.filter(user=user).order_by('-date')
+
+    paginator = Paginator(transactions,5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     return render (request, 'transaction_list.html', {
-        'transactions': transactions})
+        'transactions': transactions,
+        'page_obj': page_obj})
 
 
 @login_required
@@ -74,3 +100,55 @@ def edit_transaction(request, pk):
     else:
             form = TransactionForm(instance=transaction)
     return render(request, 'edit_transaction.html', {'form': form})
+
+@login_required
+def add_budget(request):
+    if request.method == 'POST':
+        form = BudgetForm(request.POST)
+        if form.is_valid():
+            budget = form.save(commit=False)
+            budget.user = request.user
+            budget.save()
+            return redirect('dashboard')
+    else:
+        form = BudgetForm()
+    return render(request, 'add_budget.html', {'form': form})
+
+
+@login_required
+def edit_budget(request, budget_id):
+    budget = get_object_or_404(Budget, id=budget_id, user=request.user)
+    if request.method == 'POST':
+        form = BudgetForm(request.POST, instance=budget)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = BudgetForm(instance=budget)
+    return render(request, 'edit_budget.html', {'form': form})
+
+@login_required
+def export_data_csv(request):
+        transactions = Transaction.objects.filter(user=request.user)
+      # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
+
+        # Create a CSV writer object.
+        writer = csv.writer(response)
+
+        # Write the header row.
+        writer.writerow(['Date', 'Type ', 'Category', 'Amount', 'Description'])
+
+
+        # Write data rows.
+        for t in transactions:
+            writer.writerow([
+                 t.date,
+                 t.type,
+                 t.category,
+                 t.amount,
+                 t.description
+            ])
+
+        return response
